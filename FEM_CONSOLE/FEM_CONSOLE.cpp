@@ -21,7 +21,7 @@ using namespace DirectX;
 float Geom(XMVECTOR X)
 {
 	//if (XMVectorGetX(X) > -0.9) return -0.11;
-	return 0.08;
+	return 0.07;
 }
 
 //===========================================================================//
@@ -29,7 +29,7 @@ int main() {
 
 	//cout << typeid(VRTX).name() << endl;
 
-	buffer = new ELEM[500000];
+	buffer = new ELEM[1000000];
 	PELEM Mesh = ELEM::Create();
 	auto clock = __rdtsc();
 	Mesh = ELEM::Meshing(Geom);
@@ -37,6 +37,9 @@ int main() {
 	cout << clock << ' ' << endl;
 	cout << Mesh->GetSize(CELL) << endl;
 	cout << clock / Mesh->GetSize(CELL) << endl;
+	ELEM::SetDataBuffer(Mesh);
+	ELEM::WriteMeshVTK(Mesh, "solution.vtk", 1);
+	cout << "DONE" << endl;
 
 
 

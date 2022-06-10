@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <deque>
 #include "DirectXMath.h"
 #include <string>
 #include <fstream>
@@ -59,36 +60,17 @@ public:
 			p->trave = false;
 	}
 
-	//auto& operator() (TYPES index) {
-	//	return this->Links[index];
-	//}
-
 	//======================================================//
 
-	~ELEM()
-	{
-		for (int i = VRTX; i <= MESH; i++)
-		{
+	~ELEM() {
+
+		for (int i = VRTX; i <= MESH; i++) {
 			this->Links[i].clear();
 			this->Links[i].~vector();
 		}
 
 		delete Data;
 	}
-
-	//======================================================//
-	//static void Erase(PELEM p, unsigned char n)				//”ƒ¿Àﬂ≈“ ›À≈Ã≈Õ“ »« —≈“ »
-	//{	
-	//	for (int i = VRTX; i <= MESH; i++)					//÷» À œŒ “»œ¿Ã ›À≈Ã≈Õ“Œ¬
-	//		for (PELEM pp : p->Links[i])					//÷» À œŒ —¬ﬂ«¿ÕÕ€Ã ›À≈Ã≈Õ“¿Ã
-	//			pp->Links[n] -= p;							//”ƒÀﬂÀﬂÃ »« —¬ﬂ«≈…
-	//
-	//	if (n != MESH - 1)									//”ƒ¿Àﬂ≈Ã —“¿–ÿ»≈ ›À≈Ã≈Õ“€
-	//		for (PELEM pp : p->Links[n + 1])
-	//			Erase(pp, n + 1);
-	//
-	//	delete p;											//Œ—¬Œ¡Œ∆ƒ¿≈Ã œ¿Ãﬂ“‹
-	//}
 	//======================================================//
 	void* GetData() {
 		return this->Data;
@@ -129,7 +111,7 @@ public:
 		return Link(p1, p2, pm);
 	}
 	//======================================================//
-	static bool Link(PELEM p1, PELEM p2, PELEM pm) {
+	static PELEM Link(PELEM p1, PELEM p2, PELEM pm) {
 
 		PELEM np = buffer;
 		auto n1(p1->GetType());
@@ -148,7 +130,7 @@ public:
 			if (sw) {
 				unselect(p1->Links[VRTX]);
 				unselect(p2->Links[VRTX]);
-				return false;
+				return nullptr;
 			}
 		}
 
@@ -168,7 +150,7 @@ public:
 			np->Links[n1].clear();
 			unselect(p1->Links[VRTX]);
 			unselect(p2->Links[VRTX]);
-			return false;
+			return nullptr;
 		}
 
 		np->Links[VRTX] = p1->Links[VRTX];
@@ -184,6 +166,8 @@ public:
 
 		for (PELEM& p : np->Links[VRTX])
 			p->Links[n2].push_back(np);
+
+		//cout << "TYPE " << n2 << endl;
 		
 		//—¬ﬂ«€¬¿≈Ã ÕŒ¬€… ›À≈Ã≈Õ“ — —”Ÿ≈—“¬”ﬁŸ»Ã»
 		for (PELEM& p : np->Links[n1]) {
@@ -194,18 +178,8 @@ public:
 					pp->trave = true;
 				}
 			p->Links[n2].push_back(np);
-
-			//if (n2 == CELL) {
-			//	if (p->Links[CELL].size() > 2) {
-			//		cout << "ERR0 " << p->Links[CELL].size() << endl;
-			//		cout << p1->Links[CELL].size() << endl;
-			//		cout << p2->Links[CELL].size() << endl;
-			//		cout << pm->Links[VRTX].size() << endl;
-			//		system("PAUSE");
-			//	}
-			//}
-
 		}
+
 
 		for (PELEM& p : np->Links[n1])
 			unselect(p->Links[n2]);
@@ -216,7 +190,7 @@ public:
 			for (PELEM& p : np->Links[n2])
 					Link(np, p, pm);
 
-		return true;
+		return np;
 	}
 	//======================================================//
 
@@ -355,7 +329,7 @@ public:
 	}
 	//======================================================//
 	static bool IsNotBoundary(PELEM s) {
-		return (s->Links[CELL].size() == 2);
+		return (s->Links[CELL].size() >= 2);
 	}
 	//======================================================//
 	bool CellCreating1(PELEM s, float(*MeshDist)(XMVECTOR x)) {
@@ -374,42 +348,14 @@ public:
 		PELEM np = Create(nv, m);
 		nv->SetPosition(x3);
 
+		//cout << "BEGIN" << endl;
+
 		for (auto& p : s->Links[VRTX])
 			Bind(np, p->Links[NODE][0], this);
 
-		return true;
-	}
-	//======================================================//
-	bool CellCreating1(PELEM s1, PELEM s2, float(*MeshDist)(XMVECTOR x)) {
-		if (IsNotBoundary(s1)) return false;
-		if (IsNotBoundary(s2)) return false;
-
-		XMVECTOR x1 = s1->GetPosition();
-		XMVECTOR x2 = s1->GetDirection();
-		XMVECTOR x3 = x1 + x2 * abs(MeshDist(x1)) * sqrt(2.0 / 3.0);
-		XMVECTOR x4 = s2->GetPosition();
-		XMVECTOR x5 = s2->GetDirection();
-		XMVECTOR x6 = x4 + x5 * abs(MeshDist(x4)) * sqrt(2.0 / 3.0);
-		XMVECTOR x7 = (x3 + x6) / 2.0;
-		XMVECTOR x8 = XMVector3Length(x7);
-		float    f1 = XMVectorGetX(x8);
-
-		if (f1 > 1.0) return false;
-		PELEM m = this;
-		PELEM nv = Create(m);
-		PELEM np = Create(nv, m);
-		nv->SetPosition(x7);
-
-		onselect(s1->Links[VRTX]);
-			for (auto& p : s1->Links[VRTX])
-				Bind(np, p->Links[NODE][0], this);
-			for (auto& p : s2->Links[VRTX])
-				if (!p->trave)
-					Bind(np, p->Links[NODE][0], this);
-		unselect(s1->Links[VRTX]);
+		//cout << "END" << endl;
 
 		return true;
-
 	}
 	//======================================================//
 	static PELEM Meshing(float(*MeshDist)(XMVECTOR x)) {
@@ -462,7 +408,9 @@ public:
 					float d2(XMVectorGetX(x7));
 
 	
-					if ((d1 >= 0.0f) && (d2 < 0.21)) {
+					if ((d1 >= 0) && (d2 < 0.21)) {
+
+						//cout << d1 << ' ' << d2 << endl;
 
 						unselect(vs2);
 
@@ -511,8 +459,11 @@ public:
 							return pm;
 						}
 
-						Bind(vx2->Links[NODE][0],
-							vx1->Links[NODE][0], pm);
+						if (!Bind(vx2->Links[NODE][0],
+							vx1->Links[NODE][0], pm)) {
+							cout << "ERR5" << endl;
+							system("PAUSE");
+						}
 
 						i1 = s1->Links[CELL].size();
 						i2 = s2->Links[CELL].size();
@@ -637,42 +588,39 @@ public:
 		//WriteMeshVTK(pm, "", 9000);
 	}
 	//======================================================//
-	//static void WriteMeshVTK(PELEM PM, char* Name, int IT)
-	//{
-	//	ofstream Out = ofstream(ofstream(std::to_string(IT) + "MESH.vtk"));
-	//
-	//	Out << "# vtk DataFile Version 2.0" << "\n";
-	//	Out << "Unstructured Grid Example" << "\n";
-	//	Out << "ASCII" << "\n";
-	//	Out << "DATASET UNSTRUCTURED_GRID" << "\n";
-	//	Out << "POINTS " << PM->Links[VRTX].size() << " " << "float" << "\n";
-	//
-	//	for (PELEM N : PM->Links[VRTX])
-	//	{
-	//		XMVECTOR X = N->GetPosition();
-	//		Out << XMVectorGetX(X) << " " << XMVectorGetY(X) << " " << XMVectorGetZ(X) << "\n";
-	//	}
-	//
-	//	size_t Size1 = PM->Links[CELL].size();
-	//	size_t Size2 = Size1 * 5;
-	//
-	//	Out << "CELLS " << Size1 << " " << Size2 << "\n";
-	//
-	//	for (PELEM C : PM->Links[CELL])
-	//	{
-	//		Out << 4 << " ";
-	//
-	//		for (PELEM P : C->Links[VRTX])
-	//			Out << PM->GetVertexID(P) << " ";
-	//
-	//		Out << "\n";
-	//	}
-	//
-	//	Out << "CELL_TYPES " << Size1 << "\n";
-	//
-	//	for (PELEM C : PM->Links[CELL])
-	//		Out << "10" << "\n";
-	//}
+	static void WriteMeshVTK(PELEM PM, char* Name, int IT) {
+		ofstream Out = ofstream(ofstream(std::to_string(IT) + Name));
+	
+		Out << "# vtk DataFile Version 2.0" << "\n";
+		Out << "Unstructured Grid Example" << "\n";
+		Out << "ASCII" << "\n";
+		Out << "DATASET UNSTRUCTURED_GRID" << "\n";
+		Out << "POINTS " << PM->Links[VRTX].size() << " " << "float" << "\n";
+	
+		for (PELEM N : PM->Links[VRTX]) {
+			XMVECTOR X = N->GetPosition();
+			Out << XMVectorGetX(X) << " " << XMVectorGetY(X) << " " << XMVectorGetZ(X) << "\n";
+		}
+	
+		size_t Size1 = PM->Links[CELL].size();
+		size_t Size2 = Size1 * 5;
+	
+		Out << "CELLS " << Size1 << " " << Size2 << "\n";
+	
+		for (PELEM C : PM->Links[CELL]) {
+			Out << 4 << " ";
+	
+			for (PELEM P : C->Links[VRTX])
+				Out << PM->GetVertexID(P) << " ";
+	
+			Out << "\n";
+		}
+	
+		Out << "CELL_TYPES " << Size1 << "\n";
+	
+		for (PELEM C : PM->Links[CELL])
+			Out << "10" << "\n";
+	}
 	
 	
 };
