@@ -76,10 +76,10 @@ float Geom (XMVECTOR X)
 void CSCENE::ScriptInit()
 {
 	//Mesh = ELEM::Create({}, nullptr);
-	buffer = new ELEM[300000];
-	Mesh = ELEM::Meshing(Geom);
+	//buffer = new ELEM[300000];
+	//Mesh = ELEM::Meshing(Geom);
 	//Mesh = ELEM::GetMeshSurface(Mesh);
-	ELEM::SetDataBuffer(Mesh);
+	//ELEM::SetDataBuffer(Mesh);
 
 	DATA DT;
 	DT.NumMesh	= 0;
@@ -815,7 +815,7 @@ HRESULT CSCENE::IndexBufferInit()
 	bd.CPUAccessFlags			=	0;
 	bd.MiscFlags				=	0;
 	bd.StructureByteStride		=	sizeof(UINT32);
-	InitData.pSysMem			=	ELEM::GetIndexBuffer(Mesh);
+	//InitData.pSysMem			=	ELEM::GetIndexBuffer(Mesh);
 	InitData.SysMemPitch		=	0;
 	InitData.SysMemSlicePitch	=	0;
 

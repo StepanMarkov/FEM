@@ -145,6 +145,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FEM_GRAPH.h" />
+    <ClInclude Include="FEM_MESH.h" />
     <ClInclude Include="FEM_SCENE.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />

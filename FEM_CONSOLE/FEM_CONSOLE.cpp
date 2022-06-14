@@ -5,6 +5,7 @@
 //#include "..\\FEM\FEM_SOLVER.h"
 //#include "..\\FEM\FEM_RESULTS.h"
 #include "..\\FEM\FEM_GRAPH.h"
+#include "..\\FEM\FEM_MESH.h"
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -18,9 +19,7 @@
 using namespace std;
 using namespace DirectX;
 
-float Geom(XMVECTOR X)
-{
-	//if (XMVectorGetX(X) > -0.9) return -0.11;
+float Geom(const XMVECTOR& X) {
 	return 0.07;
 }
 
@@ -29,18 +28,24 @@ int main() {
 
 	//cout << typeid(VRTX).name() << endl;
 
-	buffer = new ELEM[1000000];
-	PELEM Mesh = ELEM::Create();
+	//buffer = new ELEM[1000000]; 
+	vertexbuf = new XMVECTOR[200000];
+	vertexbufbegin = vertexbuf;
+	CMESH Mesh;
+	//PELEM Mesh = ELEM::Create();
 	auto clock = __rdtsc();
-	Mesh = ELEM::Meshing(Geom);
+	Mesh.Meshing(Geom);
+	//Mesh = ELEM::Meshing(Geom);
 	clock = __rdtsc() - clock;
 	cout << clock << ' ' << endl;
-	cout << Mesh->GetSize(CELL) << endl;
-	cout << clock / Mesh->GetSize(CELL) << endl;
-	ELEM::SetDataBuffer(Mesh);
-	ELEM::WriteMeshVTK(Mesh, "solution.vtk", 1);
+	cout << Mesh.buffer[CELL] - Mesh.Links[CELL] << endl;
+	cout << Mesh.buffer[VRTX] - Mesh.Links[VRTX] << endl;
+	cout << Mesh.buffer[LINE] - Mesh.Links[LINE] << endl;
+	cout << Mesh.buffer[SIDE] - Mesh.Links[SIDE] << endl;
+	cout << clock / (Mesh.buffer[CELL] - Mesh.Links[CELL]) << endl;
+	//ELEM::SetDataBuffer(Mesh);
+	CMESH::WriteMeshVTK(Mesh, "solution.vtk", 1);
 	cout << "DONE" << endl;
-
 
 
 	//Mesh = ELEM::GetMeshSurface(Mesh);
